@@ -1,85 +1,56 @@
-import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState } from "react";
-import axios from "axios";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
+import AdminProductsPage from "./pages/admin/AdminProductsPage";
+import AdminOrdersPage from "./pages/admin/AdminOrdersPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import HomePage from "./pages/HomePage";
+import ProductPage from "./pages/ProductPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import OrdersPage from "./pages/OrdersPage";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import VerifyPage from "./pages/VerifyPage";
 
-function Home() {
-  const [orderId, setOrderId] = useState("");
-  const [token, setToken] = useState("");
+const ProtectedRoute = ({ children }) => {
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/login" />;
+};
 
-  const handleCheckout = async () => {
-    if (!orderId || !token) {
-      alert("Please enter Order ID and Token");
-      return;
-    }
+const AdminRoute = ({ children }) => {
+  const { user } = useAuth();
+  return user?.role === "admin" ? children : <Navigate to="/" />;
+};
 
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/payment/create-checkout-session",
-        { orderId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
 
-      window.location.href = res.data.url;
-    } catch (error) {
-      console.error(error);
-      alert("Payment failed");
-    }
-  };
-
-  return (
-    <div className="App">
-      <header className="App-header">
-
-        <h2>🧪 Stripe Test Panel</h2>
-
-        <input
-          placeholder="Enter Order ID"
-          value={orderId}
-          onChange={(e) => setOrderId(e.target.value)}
-          style={{ padding: "10px", margin: "10px", width: "300px" }}
-        />
-
-        <input
-          placeholder="Enter JWT Token"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          style={{ padding: "10px", margin: "10px", width: "300px" }}
-        />
-
-        <button
-          onClick={handleCheckout}
-          style={{
-            padding: "15px 30px",
-            fontSize: "18px",
-            cursor: "pointer",
-            marginTop: "20px",
-          }}
-        >
-          Pay Now 💳
-        </button>
-
-      </header>
-    </div>
-  );
-}
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/payment-cancel" element={<PaymentCancel />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/product/:id" element={<ProductPage />} />
+
+          <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+          <Route path="/checkout/:orderId" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path="/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancel" element={<PaymentCancel />} />
+
+          <Route path="/admin/products" element={<AdminRoute><AdminProductsPage /></AdminRoute>} />
+          <Route path="/admin/orders" element={<AdminRoute><AdminOrdersPage /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -2,16 +2,15 @@ import Product from "../models/Product.js";
 
 export const createProduct = async (req, res) => {
   try {
-    const {
-      name,
-      category,
-      newPrice,
-      oldPrice,
-      quantity,
-      description,
-      images,
-      slug,
-    } = req.body;
+    const { name, category, newPrice, oldPrice, quantity, description, images } = req.body;
+
+    // ✅ بيتعمل أوتوماتيك من الـ name
+    const slug = name.toLowerCase().trim().replace(/\s+/g, "-");
+
+    // لو في منتج بنفس الـ slug موجود → ضيف timestamp عشان يبقى unique
+    const existingProduct = await Product.findOne({ slug });
+    const finalSlug = existingProduct ? `${slug}-${Date.now()}` : slug;
+
     const product = await Product.create({
       name,
       category,
@@ -20,7 +19,7 @@ export const createProduct = async (req, res) => {
       quantity,
       description,
       images,
-      slug,
+      slug: finalSlug,
     });
 
     res.status(201).json({
@@ -111,21 +110,32 @@ export const getProductById = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const allowedFields = {};
-    if (req.body.name) allowedFields.name = req.body.name;
+
+    if (req.body.name) {
+      allowedFields.name = req.body.name;
+      allowedFields.slug = req.body.name
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-");
+    }
+
     if (req.body.category) allowedFields.category = req.body.category;
     if (req.body.newPrice) allowedFields.newPrice = req.body.newPrice;
     if (req.body.oldPrice) allowedFields.oldPrice = req.body.oldPrice;
     if (req.body.quantity) allowedFields.quantity = req.body.quantity;
     if (req.body.description) allowedFields.description = req.body.description;
 
-    if (req.file) {
-      allowedFields.images = req.file.filename;
+    if (req.body.images) {
+      allowedFields.images = req.body.images;
     }
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       allowedFields,
-      { new: true },
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
     if (!product) {
@@ -147,7 +157,6 @@ export const updateProduct = async (req, res) => {
     });
   }
 };
-
 export const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
