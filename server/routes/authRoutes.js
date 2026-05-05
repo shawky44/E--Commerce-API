@@ -24,7 +24,7 @@ router.get("/profile", protect, getUserProfile);
 router.put("/profile/update-email", protect, updateEmail);
 router.put("/profile", protect, updateProfileInfo);
 
-router.patch("/resendVerificationCode", protect, resendVerificationCode);
+router.patch("/resendVerificationCode", resendVerificationCode);
 router.patch("/verifyVerificationCode", verifyVerificationCode);
 
 router.patch("/changePassword", protect, changePassword);

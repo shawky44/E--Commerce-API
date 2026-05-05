@@ -50,7 +50,7 @@ export default function HomePage() {
     <div style={styles.container}>
       {/* Navbar */}
       <nav style={styles.navbar}>
-        <h1 style={styles.logo}>🛒 E-Commerce</h1>
+        <h1 style={styles.logo}>🛒Shawky-Market</h1>
         <div style={styles.navLinks}>
           {user ? (
             <>

@@ -28,12 +28,17 @@ export const register = async (req, res) => {
       return res.status(409).json({ message: "Email already exists" });
     }
     let role = "user";
-    if (
-      adminInviteToken &&
-      adminInviteToken == process.env.ADMIN_INVITE_TOKEN
-    ) {
-      role = "admin";
-    }
+
+if (adminInviteToken) {
+  if (adminInviteToken !== process.env.ADMIN_INVITE_TOKEN) {
+    return res.status(403).json({
+      success: false,
+      message: "Invalid admin invite token",
+    });
+  }
+
+  role = "admin";
+}
     const hashpassword = await dohash(password, 10);
     const newuser = new User({
       email,
@@ -126,7 +131,7 @@ export const signOut = (req, res) => {
 ////// resendVerificationCode controller logic
 export const resendVerificationCode = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select(
+    const user = await User.findOne({ email: req.body.email }).select(
       "+verificationCode +verificationCodeValidation +resendCodeCooldown",
     );
 
@@ -273,7 +278,7 @@ export const verifyVerificationCode = async (req, res) => {
     }
     return res
       .status(400)
-      .json({ success: false, message: " Unexpected occurred!" });
+      .json({ success: false, message: " Unexpected occurred!" });  
   } catch (error) {
     console.log(error);
   }
